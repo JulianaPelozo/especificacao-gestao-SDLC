@@ -10,6 +10,7 @@ from taskflow.models import Prioridade, Status, ValidacaoError
 from taskflow.models import Tarefa
 from taskflow.repository import ArquivoCorrompidoError, RepositorioError, RepositorioJSON
 from taskflow.services import TarefaNaoEncontradaError, TaskService
+from taskflow.services import CRITERIOS_ORDENACAO
 
 SUCESSO, ERRO_USO, ERRO_DADOS = 0, 1, 2
 
@@ -61,7 +62,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("listar", help="listar tarefas, com filtros opcionais")
     p.add_argument("-s", "--status", choices=STATUS)
     p.add_argument("-p", "--prioridade", choices=PRIORIDADES)
+    p.add_argument("-o", "--ordenar", choices=CRITERIOS_ORDENACAO, default="id")
     p.set_defaults(func=cmd_listar)
+
+    p = sub.add_parser("buscar", help="buscar tarefas por palavra-chave")
+    p.add_argument("termo", help="texto procurado no título ou na descrição")
+    p.add_argument("-o", "--ordenar", choices=CRITERIOS_ORDENACAO, default="id")
+    p.set_defaults(func=cmd_buscar)
 
     p = sub.add_parser("editar", help="alterar campos de uma tarefa")
     p.add_argument("id", type=int)
@@ -97,8 +104,15 @@ def cmd_adicionar(servico: TaskService, args, entrada) -> int:
 
 
 def cmd_listar(servico: TaskService, args, entrada) -> int:
-    tarefas = servico.listar(status=args.status, prioridade=args.prioridade)
+    tarefas = servico.listar(
+        status=args.status, prioridade=args.prioridade, ordenar_por=args.ordenar
+    )
     print(formatar_tabela(tarefas, servico.hoje()))
+    return SUCESSO
+
+
+def cmd_buscar(servico: TaskService, args, entrada) -> int:
+    print(formatar_tabela(servico.buscar(args.termo, args.ordenar), servico.hoje()))
     return SUCESSO
 
 

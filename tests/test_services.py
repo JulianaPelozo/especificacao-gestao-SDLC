@@ -131,5 +131,28 @@ class TestRemover(BaseServico):
             self.servico.remover(1)
 
 
+class TestBuscarOrdenar(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Revisar Programação", prioridade="baixa", prazo="2026-11-20")
+        self.servico.adicionar("Estudar", "capítulo sobre GIT", prioridade="alta")
+        self.servico.adicionar("Prova", prioridade="media", prazo="2026-11-12")
+
+    def test_busca_sem_acentos_e_maiusculas(self):
+        self.assertEqual([t.id for t in self.servico.buscar("programacao")], [1])
+
+    def test_busca_na_descricao(self):
+        self.assertEqual([t.id for t in self.servico.buscar("git")], [2])
+
+    def test_busca_sem_resultado(self):
+        self.assertEqual(self.servico.buscar("inexistente"), [])
+
+    def test_ordenar_por_prazo_sem_prazo_por_ultimo(self):
+        self.assertEqual([t.id for t in self.servico.listar(ordenar_por="prazo")], [3, 1, 2])
+
+    def test_ordenar_por_prioridade(self):
+        self.assertEqual([t.id for t in self.servico.listar(ordenar_por="prioridade")], [2, 3, 1])
+
+
 if __name__ == "__main__":
     unittest.main()
