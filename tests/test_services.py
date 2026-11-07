@@ -116,5 +116,20 @@ class TestConcluirReabrir(BaseServico):
             self.servico.concluir(42)
 
 
+class TestRemover(BaseServico):
+    def test_remove_e_nao_reutiliza_id(self):
+        self.servico.adicionar("A")
+        self.servico.adicionar("B")
+        self.servico.remover(2)
+        self.assertEqual([t.id for t in self.repo.carregar()], [1])
+        self.assertEqual(self.servico.adicionar("C").id, 2)
+        self.servico.remover(1)
+        self.assertEqual(self.servico.adicionar("D").id, 3)
+
+    def test_id_inexistente(self):
+        with self.assertRaises(TarefaNaoEncontradaError):
+            self.servico.remover(1)
+
+
 if __name__ == "__main__":
     unittest.main()
