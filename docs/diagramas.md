@@ -1,0 +1,245 @@
+# Diagramas de Engenharia — TaskFlow CLI
+
+Os diagramas usam [Mermaid](https://mermaid.js.org/), que o GitHub desenha direto no navegador.
+
+## 1. Diagrama de classes
+
+```mermaid
+classDiagram
+    direction LR
+
+    class Prioridade {
+        <<enumeration>>
+        BAIXA = "baixa"
+        MEDIA = "media"
+        ALTA = "alta"
+        +peso() int
+    }
+
+    class Status {
+        <<enumeration>>
+        PENDENTE = "pendente"
+        CONCLUIDA = "concluida"
+    }
+
+    class Tarefa {
+        +int id
+        +str titulo
+        +str descricao
+        +Prioridade prioridade
+        +date|None prazo
+        +Status status
+        +datetime criada_em
+        +datetime|None concluida_em
+        +concluir(agora) bool
+        +reabrir() bool
+        +esta_atrasada(hoje) bool
+        +to_dict() dict
+        +from_dict(dados)$ Tarefa
+    }
+
+    class RepositorioJSON {
+        +Path caminho
+        +carregar() list~Tarefa~
+        +salvar(tarefas) None
+    }
+
+    class TaskService {
+        -RepositorioJSON repositorio
+        -Callable relogio
+        +adicionar(titulo, descricao, prioridade, prazo) Tarefa
+        +listar(status, prioridade, ordenar) list~Tarefa~
+        +obter(id) Tarefa
+        +editar(id, **campos) Tarefa
+        +concluir(id) bool
+        +reabrir(id) bool
+        +remover(id) Tarefa
+        +buscar(termo) list~Tarefa~
+        +resumo() Resumo
+    }
+
+    class Resumo {
+        +int total
+        +int pendentes
+        +int concluidas
+        +int atrasadas
+        +percentual() int
+    }
+
+    class cli {
+        <<module>>
+        +build_parser() ArgumentParser
+        +main(argv) int
+    }
+
+    class formatters {
+        <<module>>
+        +formatar_tabela(tarefas, hoje) str
+        +formatar_resumo(resumo) str
+    }
+
+    Tarefa --> Prioridade
+    Tarefa --> Status
+    RepositorioJSON ..> Tarefa : serializa
+    TaskService --> RepositorioJSON
+    TaskService ..> Tarefa : gerencia
+    TaskService ..> Resumo : cria
+    cli --> TaskService
+    cli ..> formatters
+```
+
+**Exceções do domínio:** `ValidacaoError` (dados inválidos → código 1), `TarefaNaoEncontradaError` (ID inexistente → código 1) e `ArquivoCorrompidoError` / `RepositorioError` (problemas no arquivo → código 2).
+
+## 2. Modelo de dados (arquivo JSON)
+
+Não há banco relacional: os dados ficam em um único documento JSON. O "esquema" é o seguinte:
+
+```mermaid
+erDiagram
+    ARQUIVO ||--o{ TAREFA : contem
+    ARQUIVO {
+        int versao "versão do formato (1)"
+    }
+    TAREFA {
+        int id PK "sequencial, nunca reutilizado"
+        string titulo "1-120 caracteres"
+        string descricao "pode ser vazia"
+        string prioridade "baixa | media | alta"
+        string prazo "AAAA-MM-DD ou null"
+        string status "pendente | concluida"
+        string criada_em "ISO 8601"
+        string concluida_em "ISO 8601 ou null"
+    }
+```
+
+Exemplo de `~/.taskflow/tarefas.json`:
+
+```json
+{
+  "versao": 1,
+  "tarefas": [
+    {
+      "id": 1,
+      "titulo": "Entregar atividade de SDLC",
+      "descricao": "Repositório com docs, issues e git flow",
+      "prioridade": "alta",
+      "prazo": "2026-11-14",
+      "status": "pendente",
+      "criada_em": "2026-11-07T20:00:00",
+      "concluida_em": null
+    }
+  ]
+}
+```
+
+## 3. Arquitetura — C4 Model
+
+### 3.1 Nível 1 — Contexto
+
+```mermaid
+flowchart TB
+    usuario["👤 Usuário<br/><i>Pessoa que organiza suas tarefas pelo terminal</i>"]
+    script["⚙️ Script / automação<br/><i>Shell script, cron</i>"]
+    sistema["<b>TaskFlow CLI</b><br/><i>Permite cadastrar, listar, editar,<br/>concluir e remover tarefas</i>"]
+    fs[("💾 Sistema de arquivos local<br/><i>~/.taskflow/tarefas.json</i>")]
+
+    usuario -- "digita comandos" --> sistema
+    script -- "chama comandos e lê códigos de saída" --> sistema
+    sistema -- "lê e grava JSON" --> fs
+```
+
+### 3.2 Nível 2/3 — Contêiner e componentes
+
+O sistema é um único contêiner (um processo Python). Dentro dele, os componentes ficam em camadas e cada uma depende apenas da camada de baixo:
+
+```mermaid
+flowchart TB
+    subgraph proc["Contêiner: processo Python (python -m taskflow)"]
+        cli["<b>cli.py</b><br/>Interface<br/><i>argparse, mensagens, códigos de saída</i>"]
+        fmt["<b>formatters.py</b><br/>Apresentação<br/><i>tabela e resumo em texto</i>"]
+        svc["<b>services.py</b><br/>Aplicação<br/><i>casos de uso, filtros, busca, resumo</i>"]
+        mdl["<b>models.py</b><br/>Domínio<br/><i>Tarefa, enums, validações</i>"]
+        repo["<b>repository.py</b><br/>Infraestrutura<br/><i>JSON, escrita atômica, backup</i>"]
+    end
+    fs[("tarefas.json")]
+
+    cli --> svc
+    cli --> fmt
+    fmt --> mdl
+    svc --> mdl
+    svc --> repo
+    repo --> mdl
+    repo --> fs
+```
+
+### 3.3 Sequência — cadastrar tarefa (UC01)
+
+```mermaid
+sequenceDiagram
+    actor U as Usuário
+    participant C as cli.py
+    participant S as TaskService
+    participant T as Tarefa
+    participant R as RepositorioJSON
+    participant F as tarefas.json
+
+    U->>C: taskflow adicionar "Estudar Git" --prioridade alta
+    C->>S: adicionar(titulo, prioridade=ALTA)
+    S->>R: carregar()
+    R->>F: ler
+    F-->>R: JSON
+    R-->>S: list[Tarefa]
+    S->>T: Tarefa(id=max+1, ...)
+    T-->>S: valida (ou ValidacaoError)
+    S->>R: salvar(tarefas)
+    R->>F: grava .tmp + os.replace
+    S-->>C: Tarefa
+    C-->>U: "Tarefa 1 criada: Estudar Git" (código 0)
+```
+
+## 4. Wireframes da CLI
+
+Rascunhos da saída esperada no terminal.
+
+### `taskflow listar`
+
+```
+ID  STATUS     PRIORIDADE  PRAZO        TÍTULO
+--  ---------  ----------  -----------  --------------------------
+1   pendente   alta        2026-11-05!  Entregar relatório
+2   concluida  media       2026-11-10   Estudar Git
+3   pendente   baixa       -            Ler artigo sobre SemVer
+
+3 tarefa(s).   (! = atrasada)
+```
+
+### `taskflow resumo`
+
+```
+Resumo das tarefas
+------------------
+Total:       3
+Pendentes:   2
+Concluídas:  1
+Atrasadas:   1
+
+Progresso: [██████░░░░░░░░░░░░░░] 33%
+```
+
+### `taskflow remover 3`
+
+```
+Remover a tarefa 3 "Ler artigo sobre SemVer"? [s/N] s
+Tarefa 3 removida.
+```
+
+### Erros
+
+```
+$ taskflow editar 99 --titulo "X"
+Erro: Tarefa 99 não encontrada.          ← código de saída 1
+
+$ taskflow listar          (arquivo inválido)
+Erro: o arquivo de dados está corrompido: /home/u/.taskflow/tarefas.json
+Uma cópia foi salva em /home/u/.taskflow/tarefas.json.bak   ← código 2
+```
