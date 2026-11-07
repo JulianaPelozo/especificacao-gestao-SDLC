@@ -123,5 +123,30 @@ class TestConcluirReabrir(BaseCli):
         self.assertEqual(self.executar("concluir", "5")[0], 1)
 
 
+class TestRemover(BaseCli):
+    def setUp(self):
+        super().setUp()
+        self.executar("adicionar", "Ler artigo")
+
+    def test_confirmando(self):
+        codigo, out, _ = self.executar("remover", "1", respostas=["s"])
+        self.assertEqual(codigo, 0)
+        self.assertIn('Remover a tarefa 1 "Ler artigo"? [s/N]', out)
+        self.assertIn("Tarefa 1 removida.", out)
+        self.assertEqual(self.repo.carregar(), [])
+
+    def test_cancelando(self):
+        for respostas in (["n"], [""], []):  # [] simula Ctrl+D
+            with self.subTest(respostas=respostas):
+                _, out, _ = self.executar("remover", "1", respostas=respostas)
+                self.assertIn("Remoção cancelada.", out)
+                self.assertEqual(len(self.repo.carregar()), 1)
+
+    def test_flag_sim(self):
+        _, out, _ = self.executar("remover", "1", "--sim")
+        self.assertNotIn("[s/N]", out)
+        self.assertEqual(self.repo.carregar(), [])
+
+
 if __name__ == "__main__":
     unittest.main()
