@@ -63,3 +63,46 @@ def parse_prazo(valor) -> Optional[date]:
         ) from None
 
 
+@dataclass
+class Tarefa:
+    id: int
+    titulo: str
+    descricao: str = ""
+    prioridade: Prioridade = Prioridade.MEDIA
+    prazo: Optional[date] = None
+    status: Status = Status.PENDENTE
+    criada_em: datetime = field(default_factory=lambda: datetime.now().replace(microsecond=0))
+    concluida_em: Optional[datetime] = None
+
+    def __post_init__(self):
+        self.titulo = validar_titulo(self.titulo)
+        self.descricao = (self.descricao or "").strip()
+        self.prioridade = parse_prioridade(self.prioridade)
+        self.prazo = parse_prazo(self.prazo)
+        self.status = Status(self.status)
+
+    @property
+    def concluida(self) -> bool:
+        return self.status is Status.CONCLUIDA
+
+    def concluir(self, agora: Optional[datetime] = None) -> bool:
+        """Marca como concluída. Retorna False se já estava concluída (RF05)."""
+        if self.concluida:
+            return False
+        self.status = Status.CONCLUIDA
+        self.concluida_em = (agora or datetime.now()).replace(microsecond=0)
+        return True
+
+    def reabrir(self) -> bool:
+        """Volta para pendente e apaga a data de conclusão (RN03)."""
+        if not self.concluida:
+            return False
+        self.status = Status.PENDENTE
+        self.concluida_em = None
+        return True
+
+    def esta_atrasada(self, hoje: Optional[date] = None) -> bool:
+        """Pendente com prazo anterior a hoje (RN02)."""
+        hoje = hoje or date.today()
+        return not self.concluida and self.prazo is not None and self.prazo < hoje
+
