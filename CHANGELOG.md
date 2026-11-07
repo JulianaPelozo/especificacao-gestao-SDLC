@@ -3,6 +3,14 @@
 Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.2.0] - 2026-11-08
+
+### Adicionado
+- Entidade `Tarefa` com validação de título, prioridade e prazo, além de serialização (#8).
+- Persistência em JSON com escrita atômica e caminho configurável por `TASKFLOW_ARQUIVO` (#9).
+- Comando `taskflow adicionar` (RF01) (#10).
+- Comando `taskflow listar` com filtros `--status`/`--prioridade` e marcação de atraso (RF02, RF03) (#11).
+
 ## [0.1.0] - 2026-11-07
 
 ### Adicionado
