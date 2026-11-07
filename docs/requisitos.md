@@ -33,3 +33,30 @@ Este documento lista os requisitos do TaskFlow CLI. Cada requisito tem um identi
 | **[RNF08]** | Manutenibilidade | Código organizado em camadas (modelo, repositório, serviço, CLI, formatação), com **testes automatizados** executados no GitHub Actions a cada push/PR. | Workflow `ci.yml` |
 | **[RNF09]** | Interoperabilidade | Códigos de saída padronizados: `0` sucesso, `1` erro de uso/validação, `2` erro de dados. Isso permite usar a ferramenta em scripts. | Testes da CLI |
 
+## 3. Regras de negócio (RN)
+
+| ID | Regra |
+|---|---|
+| RN01 | O ID é sequencial e **nunca é reutilizado**, mesmo após remoções (próximo ID = maior ID existente + 1). |
+| RN02 | Uma tarefa é **atrasada** quando está `pendente` e o prazo é anterior à data atual. |
+| RN03 | Ao reabrir uma tarefa, a data de conclusão é apagada. |
+| RN04 | Espaços no início e no fim do título e da descrição são removidos antes de validar. |
+
+## 4. Matriz de rastreabilidade
+
+| Requisito | Caso de uso | História | Issue | Módulo(s) |
+|---|---|---|---|---|
+| RF01 | UC01 | US01 | #7, #9 | `models.py`, `services.py`, `cli.py` |
+| RF02 | UC02 | US02 | #10 | `services.py`, `formatters.py` |
+| RF03 | UC02 | US02 | #10 | `services.py` |
+| RF04 | UC03 | US03 | #11 | `services.py`, `cli.py` |
+| RF05 | UC04 | US04 | #12 | `models.py`, `services.py` |
+| RF06 | UC05 | US05 | #13 | `services.py`, `cli.py` |
+| RF07 | UC06 | US06 | #15 | `services.py` |
+| RF08 | UC02 | US06 | #15 | `services.py` |
+| RF09 | UC07 | US07 | #16 | `services.py`, `formatters.py` |
+| RF10 | — | US08 | #19 | (planejado) |
+| RNF02, RNF03 | UC01–UC07 | — | #8, #14 | `repository.py` |
+| RNF04, RNF09 | todos | — | #9–#13 | `cli.py` |
+| RNF05 | UC01, UC03 | US01, US03 | #7 | `models.py` |
+| RNF07, RNF08 | — | — | #6, #17 | `ci.yml`, estrutura `src/` |
