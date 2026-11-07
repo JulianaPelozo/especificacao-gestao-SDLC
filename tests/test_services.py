@@ -154,5 +154,22 @@ class TestBuscarOrdenar(BaseServico):
         self.assertEqual([t.id for t in self.servico.listar(ordenar_por="prioridade")], [2, 3, 1])
 
 
+class TestResumo(BaseServico):
+    def test_sem_tarefas(self):
+        r = self.servico.resumo()
+        self.assertEqual((r.total, r.pendentes, r.concluidas, r.atrasadas), (0, 0, 0, 0))
+        self.assertEqual(r.percentual, 0)
+
+    def test_contadores(self):
+        self.servico.adicionar("Atrasada", prazo="2026-11-01")
+        self.servico.adicionar("No prazo", prazo="2026-11-30")
+        self.servico.adicionar("Sem prazo")
+        self.servico.adicionar("Feita", prazo="2026-11-01")
+        self.servico.concluir(4)
+        r = self.servico.resumo()
+        self.assertEqual((r.total, r.pendentes, r.concluidas, r.atrasadas), (4, 3, 1, 1))
+        self.assertEqual(r.percentual, 25)
+
+
 if __name__ == "__main__":
     unittest.main()

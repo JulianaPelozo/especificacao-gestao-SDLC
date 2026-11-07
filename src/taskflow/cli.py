@@ -43,6 +43,24 @@ def formatar_tabela(tarefas: List[Tarefa], hoje: Optional[date] = None) -> str:
     return "\n".join(saida) + rodape
 
 
+def formatar_resumo(resumo) -> str:
+    largura_barra = 20
+    cheios = round(largura_barra * resumo.percentual / 100)
+    barra = "█" * cheios + "░" * (largura_barra - cheios)
+    return "\n".join(
+        [
+            "Resumo das tarefas",
+            "------------------",
+            f"Total:       {resumo.total}",
+            f"Pendentes:   {resumo.pendentes}",
+            f"Concluídas:  {resumo.concluidas}",
+            f"Atrasadas:   {resumo.atrasadas}",
+            "",
+            f"Progresso: [{barra}] {resumo.percentual}%",
+        ]
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="taskflow",
@@ -92,6 +110,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("id", type=int)
     p.add_argument("-y", "--sim", action="store_true", help="não pedir confirmação")
     p.set_defaults(func=cmd_remover)
+
+    p = sub.add_parser("resumo", help="mostrar o progresso das tarefas")
+    p.set_defaults(func=cmd_resumo)
     return parser
 
 
@@ -164,6 +185,11 @@ def cmd_remover(servico: TaskService, args, entrada) -> int:
             return SUCESSO
     servico.remover(args.id)
     print(f"Tarefa {args.id} removida.")
+    return SUCESSO
+
+
+def cmd_resumo(servico: TaskService, args, entrada) -> int:
+    print(formatar_resumo(servico.resumo()))
     return SUCESSO
 
 
