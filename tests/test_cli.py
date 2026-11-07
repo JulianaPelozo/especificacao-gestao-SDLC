@@ -111,5 +111,17 @@ class TestEditar(BaseCli):
         self.assertIn("Nada para alterar", err)
 
 
+class TestConcluirReabrir(BaseCli):
+    def test_fluxo(self):
+        self.executar("adicionar", "Estudar Git")
+        self.assertEqual(self.executar("concluir", "1")[1].strip(), "Tarefa 1 concluída.")
+        self.assertEqual(self.executar("concluir", "1")[1].strip(), "Tarefa 1 já estava concluída.")
+        self.assertEqual(self.executar("reabrir", "1")[1].strip(), "Tarefa 1 reaberta.")
+        self.assertEqual(self.executar("reabrir", "1")[1].strip(), "Tarefa 1 já estava pendente.")
+
+    def test_inexistente(self):
+        self.assertEqual(self.executar("concluir", "5")[0], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

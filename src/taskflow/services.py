@@ -103,3 +103,19 @@ class TaskService:
         tarefas[tarefas.index(tarefa)] = atualizada
         self.repositorio.salvar(tarefas)
         return atualizada
+
+    def concluir(self, tarefa_id: int) -> bool:
+        """UC04 — retorna False se a tarefa já estava concluída."""
+        tarefas = self.repositorio.carregar()
+        alterou = self._localizar(tarefas, tarefa_id).concluir(self.relogio())
+        if alterou:
+            self.repositorio.salvar(tarefas)
+        return alterou
+
+    def reabrir(self, tarefa_id: int) -> bool:
+        """UC04 A1 — retorna False se a tarefa já estava pendente."""
+        tarefas = self.repositorio.carregar()
+        alterou = self._localizar(tarefas, tarefa_id).reabrir()
+        if alterou:
+            self.repositorio.salvar(tarefas)
+        return alterou

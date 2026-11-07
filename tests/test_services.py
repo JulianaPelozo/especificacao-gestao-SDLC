@@ -88,5 +88,33 @@ class TestEditar(BaseServico):
         self.assertEqual(self.repo.caminho.read_text(encoding="utf-8"), antes)
 
 
+class TestConcluirReabrir(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Estudar Git")
+
+    def test_concluir_registra_data(self):
+        self.assertTrue(self.servico.concluir(1))
+        [t] = self.repo.carregar()
+        self.assertIs(t.status, Status.CONCLUIDA)
+        self.assertEqual(t.concluida_em, AGORA)
+
+    def test_concluir_duas_vezes(self):
+        self.servico.concluir(1)
+        self.assertFalse(self.servico.concluir(1))
+
+    def test_reabrir(self):
+        self.servico.concluir(1)
+        self.assertTrue(self.servico.reabrir(1))
+        [t] = self.repo.carregar()
+        self.assertIs(t.status, Status.PENDENTE)
+        self.assertIsNone(t.concluida_em)
+        self.assertFalse(self.servico.reabrir(1))
+
+    def test_id_inexistente(self):
+        with self.assertRaises(TarefaNaoEncontradaError):
+            self.servico.concluir(42)
+
+
 if __name__ == "__main__":
     unittest.main()
