@@ -37,3 +37,22 @@ class RepositorioJSON:
         except OSError as erro:
             raise RepositorioError(f"não foi possível acessar o arquivo de dados: {erro}") from erro
         return [Tarefa.from_dict(item) for item in dados.get("tarefas", [])]
+
+    def salvar(self, tarefas: List[Tarefa]) -> None:
+        """Grava de forma atômica: escreve em um temporário e troca com os.replace."""
+        documento = {"versao": VERSAO_FORMATO, "tarefas": [t.to_dict() for t in tarefas]}
+        try:
+            self.caminho.parent.mkdir(parents=True, exist_ok=True)
+            fd, temporario = tempfile.mkstemp(
+                dir=self.caminho.parent, prefix=".tarefas-", suffix=".tmp"
+            )
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as arquivo:
+                    json.dump(documento, arquivo, ensure_ascii=False, indent=2)
+                    arquivo.write("\n")
+                os.replace(temporario, self.caminho)
+            except BaseException:
+                Path(temporario).unlink(missing_ok=True)
+                raise
+        except OSError as erro:
+            raise RepositorioError(f"não foi possível gravar o arquivo de dados: {erro}") from erro
