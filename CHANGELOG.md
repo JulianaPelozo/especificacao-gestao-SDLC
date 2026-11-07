@@ -3,6 +3,18 @@
 Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.0.0] - 2026-11-12
+
+Primeira versão estável.
+
+### Adicionado
+- Comando `taskflow buscar`, que ignora acentos e maiúsculas, e opção `--ordenar id|prazo|prioridade` em `listar` (RF07, RF08) (#16).
+- Comando `taskflow resumo` com contadores, tarefas atrasadas e barra de progresso (RF09) (#17).
+- README completo com badges, instalação, funcionalidades, documentação e fluxo de branches; licença MIT (#19).
+
+### Alterado
+- Formatação de saída extraída para `taskflow/formatters.py`, sem mudança de comportamento (#18).
+
 ## [0.3.1] - 2026-11-10
 
 ### Corrigido
