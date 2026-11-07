@@ -136,3 +136,115 @@ scripts/criar-backlog.sh   # cria labels, milestones e issues via GitHub CLI
 
 Cada camada depende apenas da camada de baixo (`cli → services → repository/models`). Veja os diagramas C4 em [docs/diagramas.md](docs/diagramas.md).
 
+## Fluxo de trabalho (Git Flow)
+
+| Branch | Origem | Destino do merge | Finalidade | Exemplo |
+|---|---|---|---|---|
+| `main` | — | — | Produção: só recebe releases e hotfixes, cada merge recebe uma tag SemVer | `v1.0.0` |
+| `develop` | `main` | `main` (via `release/*`) | Integração das funcionalidades prontas | — |
+| `feature/issue-NN-descricao` | `develop` | `develop` | Uma branch por issue de funcionalidade/documentação | `feature/issue-10-cadastrar-tarefa` |
+| `refactor/issue-NN-descricao` | `develop` | `develop` | Melhoria interna sem mudar comportamento | `refactor/issue-18-formatters` |
+| `release/vX.Y.Z` | `develop` | `main` **e** `develop` | Preparar a versão (changelog e versão do pacote) | `release/v0.2.0` |
+| `hotfix/vX.Y.Z` | `main` | `main` **e** `develop` | Correção urgente em produção | `hotfix/v0.3.1` |
+
+Nunca há commit direto em `main`. Todo merge usa `--no-ff`, para que cada issue apareça como um bloco no histórico, e a mensagem de merge traz `Closes #N`.
+
+```mermaid
+gitGraph
+    commit id: "Initial commit"
+    branch develop
+    branch feature/issue-07
+    commit id: "chore(setup) #7"
+    checkout develop
+    merge feature/issue-07
+    branch feature/issues-02-06
+    commit id: "docs #2-#6"
+    checkout develop
+    merge feature/issues-02-06
+    branch release/v0.1.0
+    commit id: "release 0.1.0"
+    checkout main
+    merge release/v0.1.0 tag: "v0.1.0"
+    checkout develop
+    merge release/v0.1.0
+    branch feature/issues-08-11
+    commit id: "feat #8-#11"
+    checkout develop
+    merge feature/issues-08-11
+    branch release/v0.2.0
+    commit id: "release 0.2.0"
+    checkout main
+    merge release/v0.2.0 tag: "v0.2.0"
+    checkout develop
+    merge release/v0.2.0
+    branch feature/issues-12-14
+    commit id: "feat #12-#14"
+    checkout develop
+    merge feature/issues-12-14
+    branch release/v0.3.0
+    commit id: "release 0.3.0"
+    checkout main
+    merge release/v0.3.0 tag: "v0.3.0"
+    checkout develop
+    merge release/v0.3.0
+    checkout main
+    branch hotfix/v0.3.1
+    commit id: "fix #15"
+    checkout main
+    merge hotfix/v0.3.1 tag: "v0.3.1"
+    checkout develop
+    merge hotfix/v0.3.1
+    branch feature/issues-16-19
+    commit id: "feat/refactor/docs #16-#19"
+    checkout develop
+    merge feature/issues-16-19
+    branch release/v1.0.0
+    commit id: "release 1.0.0"
+    checkout main
+    merge release/v1.0.0 tag: "v1.0.0"
+    checkout develop
+    merge release/v1.0.0
+```
+
+> Simplificação: no histórico real, cada issue tem a sua própria branch (`git log --graph --oneline --all`).
+
+### Convenção de commits
+
+Seguimos [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/), sempre com a issue entre parênteses:
+
+```
+<tipo>(<escopo>): <descrição no imperativo> (#<issue>)
+```
+
+| Tipo | Uso | Exemplo real deste repositório |
+|---|---|---|
+| `feat` | Nova funcionalidade | `feat(cli): implementar comando remover com confirmação e flag --sim (#14)` |
+| `fix` | Correção de bug | `fix(repository): detectar JSON corrompido e preservar cópia .bak (#15)` |
+| `docs` | Documentação | `docs(requisitos): detalhar requisitos não funcionais RNF01–RNF09 (#3)` |
+| `test` | Testes | `test(services): cobrir busca normalizada e ordenação por prazo e prioridade (#16)` |
+| `refactor` | Mudança interna sem alterar comportamento | `refactor(formatters): extrair formatação de tabela e resumo para módulo próprio (#18)` |
+| `chore` / `ci` | Build, versão, configuração | `chore(release): atualizar versão para 0.2.0` |
+
+### Versionamento semântico
+
+| Tag | Tipo | Marco |
+|---|---|---|
+| `v0.1.0` | minor | Documentação de planejamento e setup (#2–#7) |
+| `v0.2.0` | minor | Modelo, persistência, cadastro e listagem (#8–#11) |
+| `v0.3.0` | minor | Edição, conclusão/reabertura e remoção (#12–#14) |
+| `v0.3.1` | **patch** | Hotfix: arquivo JSON corrompido (#15) |
+| `v1.0.0` | major | Primeira versão estável: busca, ordenação, resumo e documentação final (#16–#19) |
+
+Todas as tags são **anotadas** (`git tag -a`). Veja-as com `git tag -n`.
+
+### Backlog
+
+O backlog fica nas [Issues](../../issues), com labels (`documentation`, `feature`, `enhancement`, `bug`, `refactor`, `setup`) e milestones por versão. Cada issue traz seus critérios de aceite, extraídos das [histórias de usuário](docs/user-stories.md). O script [`scripts/criar-backlog.sh`](scripts/criar-backlog.sh) recria o backlog completo com a [GitHub CLI](https://cli.github.com/).
+
+## Licença
+
+Distribuído sob a licença MIT. Veja [LICENSE](LICENSE).
+
+---
+
+Desenvolvido por **Juliana Pelozo Pacheco** como atividade prática de Especificação e Gestão do Ciclo de Vida de Software (SDLC).
