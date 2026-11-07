@@ -106,3 +106,28 @@ class Tarefa:
         hoje = hoje or date.today()
         return not self.concluida and self.prazo is not None and self.prazo < hoje
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "descricao": self.descricao,
+            "prioridade": self.prioridade.value,
+            "prazo": self.prazo.isoformat() if self.prazo else None,
+            "status": self.status.value,
+            "criada_em": self.criada_em.isoformat(),
+            "concluida_em": self.concluida_em.isoformat() if self.concluida_em else None,
+        }
+
+    @classmethod
+    def from_dict(cls, dados: dict) -> "Tarefa":
+        concluida_em = dados.get("concluida_em")
+        return cls(
+            id=int(dados["id"]),
+            titulo=dados["titulo"],
+            descricao=dados.get("descricao", ""),
+            prioridade=dados.get("prioridade", Prioridade.MEDIA.value),
+            prazo=dados.get("prazo"),
+            status=dados.get("status", Status.PENDENTE.value),
+            criada_em=datetime.fromisoformat(dados["criada_em"]),
+            concluida_em=datetime.fromisoformat(concluida_em) if concluida_em else None,
+        )
