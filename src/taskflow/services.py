@@ -119,3 +119,11 @@ class TaskService:
         if alterou:
             self.repositorio.salvar(tarefas)
         return alterou
+
+    def remover(self, tarefa_id: int) -> Tarefa:
+        """UC05 — remove e devolve a tarefa removida."""
+        tarefas = self.repositorio.carregar()
+        tarefa = self._localizar(tarefas, tarefa_id)
+        tarefas.remove(tarefa)
+        self.repositorio.salvar(tarefas)
+        return tarefa
