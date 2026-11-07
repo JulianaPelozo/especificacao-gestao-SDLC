@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from typing import Callable, List, Optional
 
-from taskflow.models import Prioridade, Tarefa
+from taskflow.models import Prioridade, Status, Tarefa, parse_prioridade
 from taskflow.repository import RepositorioJSON
 
 
@@ -53,3 +53,17 @@ class TaskService:
         tarefas.append(tarefa)
         self.repositorio.salvar(tarefas)
         return tarefa
+
+    def listar(
+        self,
+        status: Optional[str] = None,
+        prioridade: Optional[str] = None,
+    ) -> List[Tarefa]:
+        """UC02 — lista com filtros opcionais por status e prioridade (RF02, RF03)."""
+        tarefas = self.repositorio.carregar()
+        if status:
+            tarefas = [t for t in tarefas if t.status is Status(status)]
+        if prioridade:
+            alvo = parse_prioridade(prioridade)
+            tarefas = [t for t in tarefas if t.prioridade is alvo]
+        return sorted(tarefas, key=lambda t: t.id)
