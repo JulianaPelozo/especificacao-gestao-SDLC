@@ -72,6 +72,14 @@ def build_parser() -> argparse.ArgumentParser:
     prazo.add_argument("--prazo", help="novo prazo no formato AAAA-MM-DD")
     prazo.add_argument("--sem-prazo", action="store_true", help="remover o prazo")
     p.set_defaults(func=cmd_editar)
+
+    p = sub.add_parser("concluir", help="marcar uma tarefa como concluída")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_concluir)
+
+    p = sub.add_parser("reabrir", help="voltar uma tarefa concluída para pendente")
+    p.add_argument("id", type=int)
+    p.set_defaults(func=cmd_reabrir)
     return parser
 
 
@@ -106,6 +114,22 @@ def cmd_editar(servico: TaskService, args, entrada) -> int:
         remover_prazo=args.sem_prazo,
     )
     print(f"Tarefa {args.id} atualizada.")
+    return SUCESSO
+
+
+def cmd_concluir(servico: TaskService, args, entrada) -> int:
+    if servico.concluir(args.id):
+        print(f"Tarefa {args.id} concluída.")
+    else:
+        print(f"Tarefa {args.id} já estava concluída.")
+    return SUCESSO
+
+
+def cmd_reabrir(servico: TaskService, args, entrada) -> int:
+    if servico.reabrir(args.id):
+        print(f"Tarefa {args.id} reaberta.")
+    else:
+        print(f"Tarefa {args.id} já estava pendente.")
     return SUCESSO
 
 
