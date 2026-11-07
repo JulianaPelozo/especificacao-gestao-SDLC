@@ -3,6 +3,11 @@
 Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.0.1] - 2026-11-07
+
+### Adicionado
+- Resumo do projeto com a ideia do software e a stack tecnológica (`docs/resumo.md`), com link no README (#21).
+
 ## [1.0.0] - 2026-11-12
 
 Primeira versão estável.

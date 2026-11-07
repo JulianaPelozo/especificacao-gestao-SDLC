@@ -1,6 +1,6 @@
 # TaskFlow CLI
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.0.0-blue)](https://github.com/JulianaPelozo/especificacao-gestao-SDLC/releases)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-v1.0.1-blue)](https://github.com/JulianaPelozo/especificacao-gestao-SDLC/releases)
 [![CI](https://github.com/JulianaPelozo/especificacao-gestao-SDLC/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/JulianaPelozo/especificacao-gestao-SDLC/actions/workflows/ci.yml)
 [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -112,6 +112,7 @@ TASKFLOW_ARQUIVO=./estudos.json taskflow listar
 
 | Documento | Conteúdo |
 |---|---|
+| [Resumo do Projeto](docs/resumo.md) | Ideia do software e stack tecnológica, em dois parágrafos |
 | [Termo de Abertura](docs/project-charter.md) | Justificativa, visão, objetivos SMART, escopo, stakeholders, riscos e marcos |
 | [Requisitos](docs/requisitos.md) | RF01–RF10, RNF01–RNF09, regras de negócio e matriz de rastreabilidade |
 | [Casos de Uso](docs/casos-de-uso.md) | Atores e UC01–UC07 com fluxos principais, alternativos e de exceção |
