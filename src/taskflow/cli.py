@@ -62,6 +62,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-s", "--status", choices=STATUS)
     p.add_argument("-p", "--prioridade", choices=PRIORIDADES)
     p.set_defaults(func=cmd_listar)
+
+    p = sub.add_parser("editar", help="alterar campos de uma tarefa")
+    p.add_argument("id", type=int)
+    p.add_argument("-t", "--titulo")
+    p.add_argument("-d", "--descricao")
+    p.add_argument("-p", "--prioridade", choices=PRIORIDADES)
+    prazo = p.add_mutually_exclusive_group()
+    prazo.add_argument("--prazo", help="novo prazo no formato AAAA-MM-DD")
+    prazo.add_argument("--sem-prazo", action="store_true", help="remover o prazo")
+    p.set_defaults(func=cmd_editar)
     return parser
 
 
@@ -76,6 +86,26 @@ def cmd_adicionar(servico: TaskService, args, entrada) -> int:
 def cmd_listar(servico: TaskService, args, entrada) -> int:
     tarefas = servico.listar(status=args.status, prioridade=args.prioridade)
     print(formatar_tabela(tarefas, servico.hoje()))
+    return SUCESSO
+
+
+def cmd_editar(servico: TaskService, args, entrada) -> int:
+    campos = (args.titulo, args.descricao, args.prioridade, args.prazo)
+    if all(c is None for c in campos) and not args.sem_prazo:
+        print(
+            "Nada para alterar. Informe --titulo, --descricao, --prioridade, --prazo ou --sem-prazo.",
+            file=sys.stderr,
+        )
+        return ERRO_USO
+    servico.editar(
+        args.id,
+        titulo=args.titulo,
+        descricao=args.descricao,
+        prioridade=args.prioridade,
+        prazo=args.prazo,
+        remover_prazo=args.sem_prazo,
+    )
+    print(f"Tarefa {args.id} atualizada.")
     return SUCESSO
 
 
