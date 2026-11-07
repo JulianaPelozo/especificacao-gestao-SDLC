@@ -1,5 +1,6 @@
 """Camada de aplicação: implementa os casos de uso sobre as tarefas."""
 
+from dataclasses import dataclass
 from datetime import date, datetime
 import unicodedata
 from typing import Callable, List, Optional
@@ -32,6 +33,21 @@ def ordenar(tarefas: List[Tarefa], criterio: str = "id") -> List[Tarefa]:
     if criterio == "id":
         return sorted(tarefas, key=lambda t: t.id)
     raise ValueError(f"critério de ordenação inválido: {criterio}")
+
+
+@dataclass(frozen=True)
+class Resumo:
+    total: int
+    pendentes: int
+    concluidas: int
+    atrasadas: int
+
+    @property
+    def percentual(self) -> int:
+        """Percentual de conclusão, arredondado (0 quando não há tarefas)."""
+        if self.total == 0:
+            return 0
+        return round(100 * self.concluidas / self.total)
 
 
 class TaskService:
@@ -159,3 +175,15 @@ class TaskService:
             if alvo in normalizar(t.titulo) or alvo in normalizar(t.descricao)
         ]
         return ordenar(encontradas, ordenar_por)
+
+    def resumo(self) -> Resumo:
+        """UC07 — contadores e percentual de conclusão (RF09)."""
+        tarefas = self.repositorio.carregar()
+        hoje = self.hoje()
+        concluidas = sum(1 for t in tarefas if t.concluida)
+        return Resumo(
+            total=len(tarefas),
+            pendentes=len(tarefas) - concluidas,
+            concluidas=concluidas,
+            atrasadas=sum(1 for t in tarefas if t.esta_atrasada(hoje)),
+        )
