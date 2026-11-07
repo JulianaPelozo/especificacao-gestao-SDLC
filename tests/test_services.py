@@ -62,5 +62,31 @@ class TestListar(BaseServico):
         self.assertEqual(self.servico.listar(status="pendente", prioridade="baixa"), [])
 
 
+class TestEditar(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Estudar Git", "cap. 3", "alta", "2026-11-14")
+
+    def test_altera_apenas_campos_informados(self):
+        t = self.servico.editar(1, prioridade="baixa")
+        self.assertIs(t.prioridade, Prioridade.BAIXA)
+        self.assertEqual(t.titulo, "Estudar Git")
+        self.assertEqual(t.descricao, "cap. 3")
+        self.assertEqual(self.repo.carregar()[0], t)
+
+    def test_remove_prazo(self):
+        self.assertIsNone(self.servico.editar(1, remover_prazo=True).prazo)
+
+    def test_id_inexistente(self):
+        with self.assertRaises(TarefaNaoEncontradaError):
+            self.servico.editar(99, titulo="X")
+
+    def test_valor_invalido_nao_altera_arquivo(self):
+        antes = self.repo.caminho.read_text(encoding="utf-8")
+        with self.assertRaises(ValidacaoError):
+            self.servico.editar(1, titulo="Novo", prazo="amanhã")
+        self.assertEqual(self.repo.caminho.read_text(encoding="utf-8"), antes)
+
+
 if __name__ == "__main__":
     unittest.main()
