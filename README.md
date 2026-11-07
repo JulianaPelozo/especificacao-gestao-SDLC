@@ -112,6 +112,7 @@ TASKFLOW_ARQUIVO=./estudos.json taskflow listar
 
 | Documento | Conteúdo |
 |---|---|
+| [Resumo do Projeto](docs/resumo.md) | Ideia do software e stack tecnológica, em dois parágrafos |
 | [Termo de Abertura](docs/project-charter.md) | Justificativa, visão, objetivos SMART, escopo, stakeholders, riscos e marcos |
 | [Requisitos](docs/requisitos.md) | RF01–RF10, RNF01–RNF09, regras de negócio e matriz de rastreabilidade |
 | [Casos de Uso](docs/casos-de-uso.md) | Atores e UC01–UC07 com fluxos principais, alternativos e de exceção |
