@@ -132,3 +132,68 @@ Exemplo de `~/.taskflow/tarefas.json`:
 }
 ```
 
+## 3. Arquitetura — C4 Model
+
+### 3.1 Nível 1 — Contexto
+
+```mermaid
+flowchart TB
+    usuario["👤 Usuário<br/><i>Pessoa que organiza suas tarefas pelo terminal</i>"]
+    script["⚙️ Script / automação<br/><i>Shell script, cron</i>"]
+    sistema["<b>TaskFlow CLI</b><br/><i>Permite cadastrar, listar, editar,<br/>concluir e remover tarefas</i>"]
+    fs[("💾 Sistema de arquivos local<br/><i>~/.taskflow/tarefas.json</i>")]
+
+    usuario -- "digita comandos" --> sistema
+    script -- "chama comandos e lê códigos de saída" --> sistema
+    sistema -- "lê e grava JSON" --> fs
+```
+
+### 3.2 Nível 2/3 — Contêiner e componentes
+
+O sistema é um único contêiner (um processo Python). Dentro dele, os componentes ficam em camadas e cada uma depende apenas da camada de baixo:
+
+```mermaid
+flowchart TB
+    subgraph proc["Contêiner: processo Python (python -m taskflow)"]
+        cli["<b>cli.py</b><br/>Interface<br/><i>argparse, mensagens, códigos de saída</i>"]
+        fmt["<b>formatters.py</b><br/>Apresentação<br/><i>tabela e resumo em texto</i>"]
+        svc["<b>services.py</b><br/>Aplicação<br/><i>casos de uso, filtros, busca, resumo</i>"]
+        mdl["<b>models.py</b><br/>Domínio<br/><i>Tarefa, enums, validações</i>"]
+        repo["<b>repository.py</b><br/>Infraestrutura<br/><i>JSON, escrita atômica, backup</i>"]
+    end
+    fs[("tarefas.json")]
+
+    cli --> svc
+    cli --> fmt
+    fmt --> mdl
+    svc --> mdl
+    svc --> repo
+    repo --> mdl
+    repo --> fs
+```
+
+### 3.3 Sequência — cadastrar tarefa (UC01)
+
+```mermaid
+sequenceDiagram
+    actor U as Usuário
+    participant C as cli.py
+    participant S as TaskService
+    participant T as Tarefa
+    participant R as RepositorioJSON
+    participant F as tarefas.json
+
+    U->>C: taskflow adicionar "Estudar Git" --prioridade alta
+    C->>S: adicionar(titulo, prioridade=ALTA)
+    S->>R: carregar()
+    R->>F: ler
+    F-->>R: JSON
+    R-->>S: list[Tarefa]
+    S->>T: Tarefa(id=max+1, ...)
+    T-->>S: valida (ou ValidacaoError)
+    S->>R: salvar(tarefas)
+    R->>F: grava .tmp + os.replace
+    S-->>C: Tarefa
+    C-->>U: "Tarefa 1 criada: Estudar Git" (código 0)
+```
+
