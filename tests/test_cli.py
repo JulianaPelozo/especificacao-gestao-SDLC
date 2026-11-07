@@ -148,5 +148,16 @@ class TestRemover(BaseCli):
         self.assertEqual(self.repo.carregar(), [])
 
 
+class TestArquivoCorrompido(BaseCli):
+    def test_mensagem_amigavel_sem_traceback(self):
+        self.caminho.write_text("{abc", encoding="utf-8")
+        codigo, out, err = self.executar("listar")
+        self.assertEqual(codigo, 2)
+        self.assertIn("o arquivo de dados está corrompido", err)
+        self.assertIn(".bak", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(self.caminho.read_text(encoding="utf-8"), "{abc")
+
+
 if __name__ == "__main__":
     unittest.main()
