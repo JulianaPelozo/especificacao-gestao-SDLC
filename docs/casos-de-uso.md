@@ -162,3 +162,34 @@ Em todos os casos de uso, o sistema carrega o arquivo de dados antes de executar
 
 ---
 
+## UC06 — Buscar tarefas
+
+| | |
+|---|---|
+| **Requisitos** | RF07 |
+| **Ator primário** | Usuário |
+
+**Fluxo principal**
+1. O usuário executa `taskflow buscar <termo>`.
+2. O sistema normaliza o termo e os textos (minúsculas, sem acentos).
+3. O sistema exibe a tabela das tarefas cujo título ou descrição contém o termo (código 0).
+
+**Fluxos de exceção**
+- **E1 — Nenhum resultado:** exibe *"Nenhuma tarefa encontrada."* (código 0).
+
+---
+
+## UC07 — Ver resumo
+
+| | |
+|---|---|
+| **Requisitos** | RF09 |
+| **Ator primário** | Usuário |
+
+**Fluxo principal**
+1. O usuário executa `taskflow resumo`.
+2. O sistema calcula total, pendentes, concluídas, atrasadas (RN02) e o percentual de conclusão.
+3. O sistema exibe os números e uma barra de progresso textual (código 0).
+
+**Fluxos alternativos**
+- **A1 — Sem tarefas:** todos os contadores são 0 e o percentual é 0%.
