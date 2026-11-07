@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taskflow-cli"
+version = "0.0.0"
+description = "Mini-gerenciador de tarefas de linha de comando com persistência em JSON."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Juliana Pelozo Pacheco" }]
+
+[project.scripts]
+taskflow = "taskflow.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
