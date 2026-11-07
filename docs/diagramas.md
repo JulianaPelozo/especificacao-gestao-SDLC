@@ -90,3 +90,45 @@ classDiagram
 
 **Exceções do domínio:** `ValidacaoError` (dados inválidos → código 1), `TarefaNaoEncontradaError` (ID inexistente → código 1) e `ArquivoCorrompidoError` / `RepositorioError` (problemas no arquivo → código 2).
 
+## 2. Modelo de dados (arquivo JSON)
+
+Não há banco relacional: os dados ficam em um único documento JSON. O "esquema" é o seguinte:
+
+```mermaid
+erDiagram
+    ARQUIVO ||--o{ TAREFA : contem
+    ARQUIVO {
+        int versao "versão do formato (1)"
+    }
+    TAREFA {
+        int id PK "sequencial, nunca reutilizado"
+        string titulo "1-120 caracteres"
+        string descricao "pode ser vazia"
+        string prioridade "baixa | media | alta"
+        string prazo "AAAA-MM-DD ou null"
+        string status "pendente | concluida"
+        string criada_em "ISO 8601"
+        string concluida_em "ISO 8601 ou null"
+    }
+```
+
+Exemplo de `~/.taskflow/tarefas.json`:
+
+```json
+{
+  "versao": 1,
+  "tarefas": [
+    {
+      "id": 1,
+      "titulo": "Entregar atividade de SDLC",
+      "descricao": "Repositório com docs, issues e git flow",
+      "prioridade": "alta",
+      "prazo": "2026-11-14",
+      "status": "pendente",
+      "criada_em": "2026-11-07T20:00:00",
+      "concluida_em": null
+    }
+  ]
+}
+```
+
