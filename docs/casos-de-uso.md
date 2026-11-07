@@ -89,3 +89,76 @@ Em todos os casos de uso, o sistema carrega o arquivo de dados antes de executar
 
 ---
 
+## UC03 — Editar tarefa
+
+| | |
+|---|---|
+| **Requisitos** | RF04, RNF05 |
+| **Ator primário** | Usuário |
+| **Pré-condições** | Existe uma tarefa com o ID informado. |
+| **Pós-condições** | Apenas os campos informados foram alterados. |
+
+**Fluxo principal**
+1. O usuário executa `taskflow editar <id>` com uma ou mais opções: `--titulo`, `--descricao`, `--prioridade`, `--prazo`.
+2. O sistema localiza a tarefa.
+3. O sistema valida os novos valores.
+4. O sistema aplica as alterações, grava o arquivo e exibe *"Tarefa N atualizada."* (código 0).
+
+**Fluxos alternativos**
+- **A1 — Remover prazo:** com `--sem-prazo`, o prazo da tarefa é apagado.
+
+**Fluxos de exceção**
+- **E1 — ID inexistente:** no passo 2, o sistema exibe *"Erro: Tarefa N não encontrada."* e encerra com código 1.
+- **E2 — Nenhum campo informado:** no passo 1, o sistema exibe *"Nada para alterar …"* e encerra com código 1.
+- **E3 — Valor inválido:** no passo 3, o sistema exibe a mensagem de validação e encerra com código 1, sem gravar.
+
+---
+
+## UC04 — Concluir / reabrir tarefa
+
+| | |
+|---|---|
+| **Requisitos** | RF05 |
+| **Ator primário** | Usuário |
+| **Pré-condições** | Existe uma tarefa com o ID informado. |
+| **Pós-condições** | O status da tarefa foi alterado e a data de conclusão foi registrada ou apagada (RN03). |
+
+**Fluxo principal (concluir)**
+1. O usuário executa `taskflow concluir <id>`.
+2. O sistema localiza a tarefa pendente.
+3. O sistema muda o status para `concluida`, registra a data/hora de conclusão e grava o arquivo.
+4. O sistema exibe *"Tarefa N concluída."* (código 0).
+
+**Fluxos alternativos**
+- **A1 — Reabrir:** o usuário executa `taskflow reabrir <id>`; o status volta a `pendente` e a data de conclusão é apagada. Mensagem: *"Tarefa N reaberta."*
+- **A2 — Já está no estado desejado:** se a tarefa já está concluída (ou já pendente, ao reabrir), o sistema exibe um aviso (*"Tarefa N já estava concluída."*), não altera nada e encerra com código 0.
+
+**Fluxos de exceção**
+- **E1 — ID inexistente:** exibe *"Erro: Tarefa N não encontrada."* e encerra com código 1.
+
+---
+
+## UC05 — Remover tarefa
+
+| | |
+|---|---|
+| **Requisitos** | RF06 |
+| **Ator primário** | Usuário ou script |
+| **Pré-condições** | Existe uma tarefa com o ID informado. |
+| **Pós-condições** | A tarefa não existe mais no arquivo; seu ID não é reutilizado (RN01). |
+
+**Fluxo principal**
+1. O usuário executa `taskflow remover <id>`.
+2. O sistema localiza a tarefa e pergunta *"Remover a tarefa N "<título>"? [s/N]"*.
+3. O usuário responde `s`.
+4. O sistema remove a tarefa, grava o arquivo e exibe *"Tarefa N removida."* (código 0).
+
+**Fluxos alternativos**
+- **A1 — Sem confirmação interativa:** com `--sim`, os passos 2 e 3 são pulados (uso em scripts).
+- **A2 — Cancelamento:** no passo 3, qualquer resposta diferente de `s` (ou Ctrl+D) cancela: o sistema exibe *"Remoção cancelada."* e encerra com código 0, sem alterar o arquivo.
+
+**Fluxos de exceção**
+- **E1 — ID inexistente:** exibe *"Erro: Tarefa N não encontrada."* e encerra com código 1.
+
+---
+
