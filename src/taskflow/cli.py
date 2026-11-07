@@ -8,7 +8,7 @@ from typing import Callable, List, Optional
 from taskflow import __version__
 from taskflow.models import Prioridade, Status, ValidacaoError
 from taskflow.models import Tarefa
-from taskflow.repository import RepositorioError, RepositorioJSON
+from taskflow.repository import ArquivoCorrompidoError, RepositorioError, RepositorioJSON
 from taskflow.services import TarefaNaoEncontradaError, TaskService
 
 SUCESSO, ERRO_USO, ERRO_DADOS = 0, 1, 2
@@ -169,6 +169,10 @@ def main(
     except (ValidacaoError, TarefaNaoEncontradaError) as erro:
         print(f"Erro: {erro.args[0]}", file=sys.stderr)
         return ERRO_USO
+    except ArquivoCorrompidoError as erro:
+        print(f"Erro: o arquivo de dados está corrompido: {erro.caminho}", file=sys.stderr)
+        print(f"Uma cópia foi salva em {erro.backup}", file=sys.stderr)
+        return ERRO_DADOS
     except RepositorioError as erro:
         print(f"Erro: {erro}", file=sys.stderr)
         return ERRO_DADOS
