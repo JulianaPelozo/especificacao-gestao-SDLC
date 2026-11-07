@@ -176,5 +176,20 @@ class TestBuscarOrdenar(BaseCli):
         self.assertLess(out.index("Depois"), out.index("Sem prazo"))
 
 
+class TestResumo(BaseCli):
+    def test_resumo(self):
+        self.executar("adicionar", "A", "--prazo", "2026-11-01")
+        self.executar("adicionar", "B")
+        self.executar("concluir", "2")
+        _, out, _ = self.executar("resumo")
+        for esperado in ("Total:       2", "Pendentes:   1", "Concluídas:  1", "Atrasadas:   1", "50%"):
+            self.assertIn(esperado, out)
+
+    def test_resumo_vazio(self):
+        _, out, _ = self.executar("resumo")
+        self.assertIn("Total:       0", out)
+        self.assertIn("0%", out)
+
+
 if __name__ == "__main__":
     unittest.main()
