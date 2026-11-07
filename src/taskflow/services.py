@@ -1,6 +1,8 @@
 """Camada de aplicação: implementa os casos de uso sobre as tarefas."""
 
+from dataclasses import dataclass
 from datetime import date, datetime
+import unicodedata
 from typing import Callable, List, Optional
 
 from taskflow.models import Prioridade, Status, Tarefa, parse_prazo, parse_prioridade
@@ -11,6 +13,41 @@ class TarefaNaoEncontradaError(LookupError):
     def __init__(self, tarefa_id: int):
         super().__init__(f"Tarefa {tarefa_id} não encontrada.")
         self.tarefa_id = tarefa_id
+
+
+CRITERIOS_ORDENACAO = ("id", "prazo", "prioridade")
+
+
+def normalizar(texto: str) -> str:
+    """Minúsculas e sem acentos, para buscas tolerantes (RF07)."""
+    decomposto = unicodedata.normalize("NFKD", texto or "")
+    return "".join(c for c in decomposto if not unicodedata.combining(c)).casefold()
+
+
+def ordenar(tarefas: List[Tarefa], criterio: str = "id") -> List[Tarefa]:
+    """Ordena por id, prazo (sem prazo por último) ou prioridade (alta primeiro) — RF08."""
+    if criterio == "prazo":
+        return sorted(tarefas, key=lambda t: (t.prazo is None, t.prazo or date.max, t.id))
+    if criterio == "prioridade":
+        return sorted(tarefas, key=lambda t: (-t.prioridade.peso, t.id))
+    if criterio == "id":
+        return sorted(tarefas, key=lambda t: t.id)
+    raise ValueError(f"critério de ordenação inválido: {criterio}")
+
+
+@dataclass(frozen=True)
+class Resumo:
+    total: int
+    pendentes: int
+    concluidas: int
+    atrasadas: int
+
+    @property
+    def percentual(self) -> int:
+        """Percentual de conclusão, arredondado (0 quando não há tarefas)."""
+        if self.total == 0:
+            return 0
+        return round(100 * self.concluidas / self.total)
 
 
 class TaskService:
@@ -58,6 +95,7 @@ class TaskService:
         self,
         status: Optional[str] = None,
         prioridade: Optional[str] = None,
+        ordenar_por: str = "id",
     ) -> List[Tarefa]:
         """UC02 — lista com filtros opcionais por status e prioridade (RF02, RF03)."""
         tarefas = self.repositorio.carregar()
@@ -66,7 +104,7 @@ class TaskService:
         if prioridade:
             alvo = parse_prioridade(prioridade)
             tarefas = [t for t in tarefas if t.prioridade is alvo]
-        return sorted(tarefas, key=lambda t: t.id)
+        return ordenar(tarefas, ordenar_por)
 
     def obter(self, tarefa_id: int) -> Tarefa:
         return self._localizar(self.repositorio.carregar(), tarefa_id)
@@ -127,3 +165,25 @@ class TaskService:
         tarefas.remove(tarefa)
         self.repositorio.salvar(tarefas)
         return tarefa
+
+    def buscar(self, termo: str, ordenar_por: str = "id") -> List[Tarefa]:
+        """UC06 — busca no título e na descrição, sem acentos e maiúsculas (RF07)."""
+        alvo = normalizar(termo.strip())
+        encontradas = [
+            t
+            for t in self.repositorio.carregar()
+            if alvo in normalizar(t.titulo) or alvo in normalizar(t.descricao)
+        ]
+        return ordenar(encontradas, ordenar_por)
+
+    def resumo(self) -> Resumo:
+        """UC07 — contadores e percentual de conclusão (RF09)."""
+        tarefas = self.repositorio.carregar()
+        hoje = self.hoje()
+        concluidas = sum(1 for t in tarefas if t.concluida)
+        return Resumo(
+            total=len(tarefas),
+            pendentes=len(tarefas) - concluidas,
+            concluidas=concluidas,
+            atrasadas=sum(1 for t in tarefas if t.esta_atrasada(hoje)),
+        )

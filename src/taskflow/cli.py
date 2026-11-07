@@ -2,44 +2,19 @@
 
 import argparse
 import sys
-from datetime import date
 from typing import Callable, List, Optional
 
 from taskflow import __version__
+from taskflow.formatters import formatar_resumo, formatar_tabela
 from taskflow.models import Prioridade, Status, ValidacaoError
-from taskflow.models import Tarefa
 from taskflow.repository import ArquivoCorrompidoError, RepositorioError, RepositorioJSON
 from taskflow.services import TarefaNaoEncontradaError, TaskService
+from taskflow.services import CRITERIOS_ORDENACAO
 
 SUCESSO, ERRO_USO, ERRO_DADOS = 0, 1, 2
 
 PRIORIDADES = [p.value for p in Prioridade]
 STATUS = [s.value for s in Status]
-
-
-def formatar_tabela(tarefas: List[Tarefa], hoje: Optional[date] = None) -> str:
-    """Tabela de tarefas; prazos vencidos de tarefas pendentes recebem '!'."""
-    if not tarefas:
-        return "Nenhuma tarefa encontrada."
-    hoje = hoje or date.today()
-    cabecalho = ("ID", "STATUS", "PRIORIDADE", "PRAZO", "TÍTULO")
-    linhas = []
-    for t in tarefas:
-        prazo = t.prazo.isoformat() if t.prazo else "-"
-        if t.esta_atrasada(hoje):
-            prazo += "!"
-        linhas.append((str(t.id), t.status.value, t.prioridade.value, prazo, t.titulo))
-    larguras = [max(len(linha[i]) for linha in [cabecalho, *linhas]) for i in range(4)]
-
-    def montar(colunas):
-        return "  ".join(c.ljust(w) for c, w in zip(colunas[:4], larguras)) + "  " + colunas[4]
-
-    saida = [montar(cabecalho), montar(tuple("-" * w for w in larguras) + ("-" * 6,))]
-    saida += [montar(linha) for linha in linhas]
-    rodape = f"\n{len(tarefas)} tarefa(s)."
-    if any(t.esta_atrasada(hoje) for t in tarefas):
-        rodape += "   (! = atrasada)"
-    return "\n".join(saida) + rodape
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,7 +36,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("listar", help="listar tarefas, com filtros opcionais")
     p.add_argument("-s", "--status", choices=STATUS)
     p.add_argument("-p", "--prioridade", choices=PRIORIDADES)
+    p.add_argument("-o", "--ordenar", choices=CRITERIOS_ORDENACAO, default="id")
     p.set_defaults(func=cmd_listar)
+
+    p = sub.add_parser("buscar", help="buscar tarefas por palavra-chave")
+    p.add_argument("termo", help="texto procurado no título ou na descrição")
+    p.add_argument("-o", "--ordenar", choices=CRITERIOS_ORDENACAO, default="id")
+    p.set_defaults(func=cmd_buscar)
 
     p = sub.add_parser("editar", help="alterar campos de uma tarefa")
     p.add_argument("id", type=int)
@@ -85,6 +66,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("id", type=int)
     p.add_argument("-y", "--sim", action="store_true", help="não pedir confirmação")
     p.set_defaults(func=cmd_remover)
+
+    p = sub.add_parser("resumo", help="mostrar o progresso das tarefas")
+    p.set_defaults(func=cmd_resumo)
     return parser
 
 
@@ -97,8 +81,15 @@ def cmd_adicionar(servico: TaskService, args, entrada) -> int:
 
 
 def cmd_listar(servico: TaskService, args, entrada) -> int:
-    tarefas = servico.listar(status=args.status, prioridade=args.prioridade)
+    tarefas = servico.listar(
+        status=args.status, prioridade=args.prioridade, ordenar_por=args.ordenar
+    )
     print(formatar_tabela(tarefas, servico.hoje()))
+    return SUCESSO
+
+
+def cmd_buscar(servico: TaskService, args, entrada) -> int:
+    print(formatar_tabela(servico.buscar(args.termo, args.ordenar), servico.hoje()))
     return SUCESSO
 
 
@@ -150,6 +141,11 @@ def cmd_remover(servico: TaskService, args, entrada) -> int:
             return SUCESSO
     servico.remover(args.id)
     print(f"Tarefa {args.id} removida.")
+    return SUCESSO
+
+
+def cmd_resumo(servico: TaskService, args, entrada) -> int:
+    print(formatar_resumo(servico.resumo()))
     return SUCESSO
 
 

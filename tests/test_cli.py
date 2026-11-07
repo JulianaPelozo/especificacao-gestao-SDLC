@@ -159,5 +159,37 @@ class TestArquivoCorrompido(BaseCli):
         self.assertEqual(self.caminho.read_text(encoding="utf-8"), "{abc")
 
 
+class TestBuscarOrdenar(BaseCli):
+    def test_buscar(self):
+        self.executar("adicionar", "Revisar Programação")
+        self.executar("adicionar", "Prova")
+        _, out, _ = self.executar("buscar", "PROGRAMACAO")
+        self.assertIn("Revisar Programação", out)
+        self.assertNotIn("Prova", out)
+
+    def test_listar_ordenado(self):
+        self.executar("adicionar", "Sem prazo")
+        self.executar("adicionar", "Depois", "--prazo", "2026-11-20")
+        self.executar("adicionar", "Antes", "--prazo", "2026-11-12")
+        _, out, _ = self.executar("listar", "--ordenar", "prazo")
+        self.assertLess(out.index("Antes"), out.index("Depois"))
+        self.assertLess(out.index("Depois"), out.index("Sem prazo"))
+
+
+class TestResumo(BaseCli):
+    def test_resumo(self):
+        self.executar("adicionar", "A", "--prazo", "2026-11-01")
+        self.executar("adicionar", "B")
+        self.executar("concluir", "2")
+        _, out, _ = self.executar("resumo")
+        for esperado in ("Total:       2", "Pendentes:   1", "Concluídas:  1", "Atrasadas:   1", "50%"):
+            self.assertIn(esperado, out)
+
+    def test_resumo_vazio(self):
+        _, out, _ = self.executar("resumo")
+        self.assertIn("Total:       0", out)
+        self.assertIn("0%", out)
+
+
 if __name__ == "__main__":
     unittest.main()

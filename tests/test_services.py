@@ -131,5 +131,45 @@ class TestRemover(BaseServico):
             self.servico.remover(1)
 
 
+class TestBuscarOrdenar(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Revisar Programação", prioridade="baixa", prazo="2026-11-20")
+        self.servico.adicionar("Estudar", "capítulo sobre GIT", prioridade="alta")
+        self.servico.adicionar("Prova", prioridade="media", prazo="2026-11-12")
+
+    def test_busca_sem_acentos_e_maiusculas(self):
+        self.assertEqual([t.id for t in self.servico.buscar("programacao")], [1])
+
+    def test_busca_na_descricao(self):
+        self.assertEqual([t.id for t in self.servico.buscar("git")], [2])
+
+    def test_busca_sem_resultado(self):
+        self.assertEqual(self.servico.buscar("inexistente"), [])
+
+    def test_ordenar_por_prazo_sem_prazo_por_ultimo(self):
+        self.assertEqual([t.id for t in self.servico.listar(ordenar_por="prazo")], [3, 1, 2])
+
+    def test_ordenar_por_prioridade(self):
+        self.assertEqual([t.id for t in self.servico.listar(ordenar_por="prioridade")], [2, 3, 1])
+
+
+class TestResumo(BaseServico):
+    def test_sem_tarefas(self):
+        r = self.servico.resumo()
+        self.assertEqual((r.total, r.pendentes, r.concluidas, r.atrasadas), (0, 0, 0, 0))
+        self.assertEqual(r.percentual, 0)
+
+    def test_contadores(self):
+        self.servico.adicionar("Atrasada", prazo="2026-11-01")
+        self.servico.adicionar("No prazo", prazo="2026-11-30")
+        self.servico.adicionar("Sem prazo")
+        self.servico.adicionar("Feita", prazo="2026-11-01")
+        self.servico.concluir(4)
+        r = self.servico.resumo()
+        self.assertEqual((r.total, r.pendentes, r.concluidas, r.atrasadas), (4, 3, 1, 1))
+        self.assertEqual(r.percentual, 25)
+
+
 if __name__ == "__main__":
     unittest.main()
