@@ -89,5 +89,64 @@ class TestListar(BaseCli):
         self.assertNotIn("Entregar relatório", out)
 
 
+class TestEditar(BaseCli):
+    def setUp(self):
+        super().setUp()
+        self.executar("adicionar", "Estudar Git", "--prazo", "2026-11-14")
+
+    def test_editar(self):
+        codigo, out, _ = self.executar("editar", "1", "--titulo", "Estudar Git Flow", "--sem-prazo")
+        self.assertEqual((codigo, out.strip()), (0, "Tarefa 1 atualizada."))
+        [t] = self.repo.carregar()
+        self.assertEqual(t.titulo, "Estudar Git Flow")
+        self.assertIsNone(t.prazo)
+
+    def test_tarefa_inexistente(self):
+        codigo, _, err = self.executar("editar", "99", "--titulo", "X")
+        self.assertEqual((codigo, err.strip()), (1, "Erro: Tarefa 99 não encontrada."))
+
+    def test_sem_campos(self):
+        codigo, _, err = self.executar("editar", "1")
+        self.assertEqual(codigo, 1)
+        self.assertIn("Nada para alterar", err)
+
+
+class TestConcluirReabrir(BaseCli):
+    def test_fluxo(self):
+        self.executar("adicionar", "Estudar Git")
+        self.assertEqual(self.executar("concluir", "1")[1].strip(), "Tarefa 1 concluída.")
+        self.assertEqual(self.executar("concluir", "1")[1].strip(), "Tarefa 1 já estava concluída.")
+        self.assertEqual(self.executar("reabrir", "1")[1].strip(), "Tarefa 1 reaberta.")
+        self.assertEqual(self.executar("reabrir", "1")[1].strip(), "Tarefa 1 já estava pendente.")
+
+    def test_inexistente(self):
+        self.assertEqual(self.executar("concluir", "5")[0], 1)
+
+
+class TestRemover(BaseCli):
+    def setUp(self):
+        super().setUp()
+        self.executar("adicionar", "Ler artigo")
+
+    def test_confirmando(self):
+        codigo, out, _ = self.executar("remover", "1", respostas=["s"])
+        self.assertEqual(codigo, 0)
+        self.assertIn('Remover a tarefa 1 "Ler artigo"? [s/N]', out)
+        self.assertIn("Tarefa 1 removida.", out)
+        self.assertEqual(self.repo.carregar(), [])
+
+    def test_cancelando(self):
+        for respostas in (["n"], [""], []):  # [] simula Ctrl+D
+            with self.subTest(respostas=respostas):
+                _, out, _ = self.executar("remover", "1", respostas=respostas)
+                self.assertIn("Remoção cancelada.", out)
+                self.assertEqual(len(self.repo.carregar()), 1)
+
+    def test_flag_sim(self):
+        _, out, _ = self.executar("remover", "1", "--sim")
+        self.assertNotIn("[s/N]", out)
+        self.assertEqual(self.repo.carregar(), [])
+
+
 if __name__ == "__main__":
     unittest.main()

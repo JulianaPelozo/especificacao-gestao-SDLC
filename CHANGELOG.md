@@ -3,6 +3,13 @@
 Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0] - 2026-11-10
+
+### Adicionado
+- Comando `taskflow editar` com alteração parcial e `--sem-prazo` (RF04) (#12).
+- Comandos `taskflow concluir` e `taskflow reabrir` (RF05) (#13).
+- Comando `taskflow remover` com confirmação interativa e `--sim` (RF06) (#14).
+
 ## [0.2.0] - 2026-11-08
 
 ### Adicionado

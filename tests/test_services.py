@@ -62,5 +62,74 @@ class TestListar(BaseServico):
         self.assertEqual(self.servico.listar(status="pendente", prioridade="baixa"), [])
 
 
+class TestEditar(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Estudar Git", "cap. 3", "alta", "2026-11-14")
+
+    def test_altera_apenas_campos_informados(self):
+        t = self.servico.editar(1, prioridade="baixa")
+        self.assertIs(t.prioridade, Prioridade.BAIXA)
+        self.assertEqual(t.titulo, "Estudar Git")
+        self.assertEqual(t.descricao, "cap. 3")
+        self.assertEqual(self.repo.carregar()[0], t)
+
+    def test_remove_prazo(self):
+        self.assertIsNone(self.servico.editar(1, remover_prazo=True).prazo)
+
+    def test_id_inexistente(self):
+        with self.assertRaises(TarefaNaoEncontradaError):
+            self.servico.editar(99, titulo="X")
+
+    def test_valor_invalido_nao_altera_arquivo(self):
+        antes = self.repo.caminho.read_text(encoding="utf-8")
+        with self.assertRaises(ValidacaoError):
+            self.servico.editar(1, titulo="Novo", prazo="amanhã")
+        self.assertEqual(self.repo.caminho.read_text(encoding="utf-8"), antes)
+
+
+class TestConcluirReabrir(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Estudar Git")
+
+    def test_concluir_registra_data(self):
+        self.assertTrue(self.servico.concluir(1))
+        [t] = self.repo.carregar()
+        self.assertIs(t.status, Status.CONCLUIDA)
+        self.assertEqual(t.concluida_em, AGORA)
+
+    def test_concluir_duas_vezes(self):
+        self.servico.concluir(1)
+        self.assertFalse(self.servico.concluir(1))
+
+    def test_reabrir(self):
+        self.servico.concluir(1)
+        self.assertTrue(self.servico.reabrir(1))
+        [t] = self.repo.carregar()
+        self.assertIs(t.status, Status.PENDENTE)
+        self.assertIsNone(t.concluida_em)
+        self.assertFalse(self.servico.reabrir(1))
+
+    def test_id_inexistente(self):
+        with self.assertRaises(TarefaNaoEncontradaError):
+            self.servico.concluir(42)
+
+
+class TestRemover(BaseServico):
+    def test_remove_e_nao_reutiliza_id(self):
+        self.servico.adicionar("A")
+        self.servico.adicionar("B")
+        self.servico.remover(2)
+        self.assertEqual([t.id for t in self.repo.carregar()], [1])
+        self.assertEqual(self.servico.adicionar("C").id, 2)
+        self.servico.remover(1)
+        self.assertEqual(self.servico.adicionar("D").id, 3)
+
+    def test_id_inexistente(self):
+        with self.assertRaises(TarefaNaoEncontradaError):
+            self.servico.remover(1)
+
+
 if __name__ == "__main__":
     unittest.main()
