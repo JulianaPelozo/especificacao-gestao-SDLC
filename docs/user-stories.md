@@ -83,3 +83,93 @@ Funcionalidade: Listar tarefas
 
 ---
 
+## US03 — Editar tarefa
+
+> **Como** usuário,
+> **quero** alterar o título, a descrição, a prioridade ou o prazo de uma tarefa
+> **para que** ela continue certa quando os planos mudarem.
+
+```gherkin
+Funcionalidade: Editar tarefa
+
+  Cenário: Alterar só a prioridade
+    Dado que existe a tarefa 1 "Estudar Git" com prioridade "alta"
+    Quando executo taskflow editar 1 --prioridade baixa
+    Então vejo a mensagem "Tarefa 1 atualizada."
+    E a tarefa 1 tem prioridade "baixa" e o título continua "Estudar Git"
+
+  Cenário: Remover o prazo
+    Dado que a tarefa 1 tem prazo 2026-11-10
+    Quando executo taskflow editar 1 --sem-prazo
+    Então a tarefa 1 fica sem prazo
+
+  Cenário: Tarefa inexistente
+    Quando executo taskflow editar 99 --titulo "X"
+    Então vejo a mensagem "Erro: Tarefa 99 não encontrada."
+    E o código de saída é 1
+
+  Cenário: Nenhum campo informado
+    Quando executo taskflow editar 1
+    Então vejo uma mensagem informando que não há nada para alterar
+```
+
+---
+
+## US04 — Concluir e reabrir tarefa
+
+> **Como** usuário,
+> **quero** marcar uma tarefa como concluída e, se precisar, reabri-la
+> **para que** eu acompanhe o que já foi feito sem perder o histórico.
+
+```gherkin
+Funcionalidade: Concluir e reabrir tarefa
+
+  Cenário: Concluir tarefa pendente
+    Dado que a tarefa 1 está "pendente"
+    Quando executo taskflow concluir 1
+    Então vejo a mensagem "Tarefa 1 concluída."
+    E a tarefa 1 fica com status "concluida" e data de conclusão registrada
+
+  Cenário: Concluir tarefa já concluída
+    Dado que a tarefa 1 está "concluida"
+    Quando executo taskflow concluir 1
+    Então vejo o aviso "Tarefa 1 já estava concluída."
+    E o código de saída é 0
+
+  Cenário: Reabrir tarefa
+    Dado que a tarefa 1 está "concluida"
+    Quando executo taskflow reabrir 1
+    Então a tarefa 1 volta a "pendente" e fica sem data de conclusão
+```
+
+---
+
+## US05 — Remover tarefa
+
+> **Como** usuário,
+> **quero** remover uma tarefa que não faz mais sentido, com uma confirmação antes
+> **para que** minha lista fique limpa sem o risco de apagar algo por engano.
+
+```gherkin
+Funcionalidade: Remover tarefa
+
+  Cenário: Remover confirmando
+    Dado que existe a tarefa 1
+    Quando executo taskflow remover 1
+    E respondo "s" à confirmação
+    Então vejo a mensagem "Tarefa 1 removida."
+    E a tarefa 1 não aparece mais na listagem
+
+  Cenário: Cancelar a remoção
+    Quando executo taskflow remover 1
+    E respondo "n" à confirmação
+    Então vejo a mensagem "Remoção cancelada."
+    E a tarefa 1 continua existindo
+
+  Cenário: Remover sem confirmação (scripts)
+    Quando executo taskflow remover 1 --sim
+    Então a tarefa 1 é removida sem nenhuma pergunta
+```
+
+---
+
