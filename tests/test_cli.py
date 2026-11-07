@@ -71,5 +71,23 @@ class TestAdicionar(BaseCli):
         self.assertIn("prazo inválido", err)
 
 
+class TestListar(BaseCli):
+    def test_lista_vazia(self):
+        codigo, out, _ = self.executar("listar")
+        self.assertEqual(codigo, 0)
+        self.assertEqual(out.strip(), "Nenhuma tarefa encontrada.")
+
+    def test_tabela_com_filtro_e_atraso(self):
+        self.executar("adicionar", "Entregar relatório", "-p", "alta", "--prazo", "2026-11-05")
+        self.executar("adicionar", "Ler artigo", "-p", "baixa")
+        _, out, _ = self.executar("listar")
+        self.assertIn("ID  STATUS", out)
+        self.assertIn("2026-11-05!", out)
+        self.assertIn("(! = atrasada)", out)
+        _, out, _ = self.executar("listar", "--prioridade", "baixa")
+        self.assertIn("Ler artigo", out)
+        self.assertNotIn("Entregar relatório", out)
+
+
 if __name__ == "__main__":
     unittest.main()

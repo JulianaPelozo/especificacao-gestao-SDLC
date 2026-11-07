@@ -40,5 +40,27 @@ class TestAdicionar(BaseServico):
         self.assertFalse(self.repo.caminho.exists())
 
 
+class TestListar(BaseServico):
+    def setUp(self):
+        super().setUp()
+        self.servico.adicionar("Estudar Git", prioridade="alta")
+        self.servico.adicionar("Ler artigo", prioridade="baixa")
+        tarefas = self.repo.carregar()
+        tarefas[1].concluir(AGORA)
+        self.repo.salvar(tarefas)
+
+    def test_lista_todas(self):
+        self.assertEqual([t.id for t in self.servico.listar()], [1, 2])
+
+    def test_filtra_por_status(self):
+        self.assertEqual([t.id for t in self.servico.listar(status="pendente")], [1])
+
+    def test_filtra_por_prioridade(self):
+        self.assertEqual([t.id for t in self.servico.listar(prioridade="baixa")], [2])
+
+    def test_filtros_combinados_sem_resultado(self):
+        self.assertEqual(self.servico.listar(status="pendente", prioridade="baixa"), [])
+
+
 if __name__ == "__main__":
     unittest.main()
