@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest import mock
 
 from taskflow.models import Prioridade, Tarefa
-from taskflow.repository import RepositorioJSON, caminho_padrao
+from taskflow.repository import ArquivoCorrompidoError, RepositorioJSON, caminho_padrao
 
 
 class TestRepositorioJSON(unittest.TestCase):
@@ -52,6 +52,22 @@ class TestRepositorioJSON(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True):
             self.assertEqual(caminho_padrao().name, "tarefas.json")
             self.assertEqual(caminho_padrao().parent.name, ".taskflow")
+
+    def test_json_invalido_gera_erro_e_backup(self):
+        self.caminho.parent.mkdir(parents=True)
+        self.caminho.write_text("{abc", encoding="utf-8")
+        with self.assertRaises(ArquivoCorrompidoError) as ctx:
+            self.repo.carregar()
+        self.assertEqual(ctx.exception.backup.read_text(encoding="utf-8"), "{abc")
+        self.assertEqual(self.caminho.read_text(encoding="utf-8"), "{abc")
+
+    def test_estrutura_invalida_gera_erro(self):
+        self.caminho.parent.mkdir(parents=True)
+        for conteudo in ('[]', '{"tarefas": [{"id": 1}]}', '{"tarefas": [{"id": 1, "titulo": ""}]}'):
+            with self.subTest(conteudo=conteudo):
+                self.caminho.write_text(conteudo, encoding="utf-8")
+                with self.assertRaises(ArquivoCorrompidoError):
+                    self.repo.carregar()
 
 
 if __name__ == "__main__":
