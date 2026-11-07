@@ -80,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("reabrir", help="voltar uma tarefa concluída para pendente")
     p.add_argument("id", type=int)
     p.set_defaults(func=cmd_reabrir)
+
+    p = sub.add_parser("remover", help="excluir uma tarefa")
+    p.add_argument("id", type=int)
+    p.add_argument("-y", "--sim", action="store_true", help="não pedir confirmação")
+    p.set_defaults(func=cmd_remover)
     return parser
 
 
@@ -130,6 +135,21 @@ def cmd_reabrir(servico: TaskService, args, entrada) -> int:
         print(f"Tarefa {args.id} reaberta.")
     else:
         print(f"Tarefa {args.id} já estava pendente.")
+    return SUCESSO
+
+
+def cmd_remover(servico: TaskService, args, entrada) -> int:
+    tarefa = servico.obter(args.id)
+    if not args.sim:
+        try:
+            resposta = entrada(f'Remover a tarefa {tarefa.id} "{tarefa.titulo}"? [s/N] ')
+        except EOFError:
+            resposta = ""
+        if resposta.strip().lower() not in ("s", "sim"):
+            print("Remoção cancelada.")
+            return SUCESSO
+    servico.remover(args.id)
+    print(f"Tarefa {args.id} removida.")
     return SUCESSO
 
 
