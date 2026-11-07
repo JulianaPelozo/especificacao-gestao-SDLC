@@ -173,3 +173,76 @@ Funcionalidade: Remover tarefa
 
 ---
 
+## US06 — Buscar e ordenar tarefas
+
+> **Como** usuário com muitas tarefas,
+> **quero** buscar por palavra-chave e ordenar por prazo ou prioridade
+> **para que** eu encontre rápido o que é mais urgente.
+
+```gherkin
+Funcionalidade: Buscar e ordenar
+
+  Cenário: Busca sem diferenciar maiúsculas e acentos
+    Dado que existe a tarefa "Revisar Programação"
+    Quando executo taskflow buscar programacao
+    Então vejo a tarefa "Revisar Programação"
+
+  Cenário: Busca na descrição
+    Dado que existe a tarefa "Estudar" com descrição "capítulo sobre git"
+    Quando executo taskflow buscar GIT
+    Então vejo a tarefa "Estudar"
+
+  Cenário: Ordenar por prazo
+    Dado tarefas com prazos 2026-11-20, 2026-11-10 e sem prazo
+    Quando executo taskflow listar --ordenar prazo
+    Então vejo as tarefas na ordem 2026-11-10, 2026-11-20 e depois a sem prazo
+
+  Cenário: Ordenar por prioridade
+    Quando executo taskflow listar --ordenar prioridade
+    Então as tarefas de prioridade "alta" aparecem primeiro e as "baixa" por último
+```
+
+---
+
+## US07 — Ver resumo do progresso
+
+> **Como** usuário,
+> **quero** ver um resumo com quantas tarefas estão pendentes, concluídas e atrasadas
+> **para que** eu tenha uma noção do meu progresso.
+
+```gherkin
+Funcionalidade: Resumo
+
+  Cenário: Resumo com tarefas
+    Dado que existem 4 tarefas, 1 concluída e 1 pendente com prazo vencido
+    Quando executo taskflow resumo
+    Então vejo "Total: 4", "Pendentes: 3", "Concluídas: 1", "Atrasadas: 1"
+    E vejo o percentual de conclusão "25%"
+
+  Cenário: Resumo sem tarefas
+    Dado que não existem tarefas
+    Quando executo taskflow resumo
+    Então vejo "Total: 0" e o percentual "0%"
+```
+
+---
+
+## US08 — Exportar para CSV *(planejada — v1.1.0)*
+
+> **Como** usuário,
+> **quero** exportar minhas tarefas para um arquivo CSV
+> **para que** eu possa abri-las em uma planilha ou compartilhá-las.
+
+```gherkin
+Funcionalidade: Exportar CSV
+
+  Cenário: Exportar todas as tarefas
+    Dado que existem 2 tarefas
+    Quando executo taskflow exportar tarefas.csv
+    Então o arquivo tarefas.csv é criado em UTF-8 com cabeçalho e 2 linhas de dados
+
+  Cenário: Arquivo de destino já existe
+    Dado que o arquivo tarefas.csv já existe
+    Quando executo taskflow exportar tarefas.csv
+    Então a CLI pede confirmação antes de sobrescrever
+```
