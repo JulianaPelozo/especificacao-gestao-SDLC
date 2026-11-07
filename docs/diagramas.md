@@ -197,3 +197,49 @@ sequenceDiagram
     C-->>U: "Tarefa 1 criada: Estudar Git" (código 0)
 ```
 
+## 4. Wireframes da CLI
+
+Rascunhos da saída esperada no terminal.
+
+### `taskflow listar`
+
+```
+ID  STATUS     PRIORIDADE  PRAZO        TÍTULO
+--  ---------  ----------  -----------  --------------------------
+1   pendente   alta        2026-11-05!  Entregar relatório
+2   concluida  media       2026-11-10   Estudar Git
+3   pendente   baixa       -            Ler artigo sobre SemVer
+
+3 tarefa(s).   (! = atrasada)
+```
+
+### `taskflow resumo`
+
+```
+Resumo das tarefas
+------------------
+Total:       3
+Pendentes:   2
+Concluídas:  1
+Atrasadas:   1
+
+Progresso: [██████░░░░░░░░░░░░░░] 33%
+```
+
+### `taskflow remover 3`
+
+```
+Remover a tarefa 3 "Ler artigo sobre SemVer"? [s/N] s
+Tarefa 3 removida.
+```
+
+### Erros
+
+```
+$ taskflow editar 99 --titulo "X"
+Erro: Tarefa 99 não encontrada.          ← código de saída 1
+
+$ taskflow listar          (arquivo inválido)
+Erro: o arquivo de dados está corrompido: /home/u/.taskflow/tarefas.json
+Uma cópia foi salva em /home/u/.taskflow/tarefas.json.bak   ← código 2
+```
