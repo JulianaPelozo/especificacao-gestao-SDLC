@@ -3,6 +3,11 @@
 Todas as mudanças relevantes deste projeto são documentadas aqui.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.1] - 2026-11-10
+
+### Corrigido
+- Um arquivo de dados com JSON inválido derrubava a aplicação com *traceback*. Agora a CLI mostra uma mensagem clara, sai com código 2, não sobrescreve o arquivo e salva uma cópia `.bak` (RNF03) (#15).
+
 ## [0.3.0] - 2026-11-10
 
 ### Adicionado
