@@ -108,3 +108,31 @@ TASKFLOW_ARQUIVO=./estudos.json taskflow listar
 
 **Códigos de saída:** `0` sucesso · `1` erro de uso/validação (ex.: ID inexistente) · `2` erro no arquivo de dados.
 
+## Documentação
+
+| Documento | Conteúdo |
+|---|---|
+| [Termo de Abertura](docs/project-charter.md) | Justificativa, visão, objetivos SMART, escopo, stakeholders, riscos e marcos |
+| [Requisitos](docs/requisitos.md) | RF01–RF10, RNF01–RNF09, regras de negócio e matriz de rastreabilidade |
+| [Casos de Uso](docs/casos-de-uso.md) | Atores e UC01–UC07 com fluxos principais, alternativos e de exceção |
+| [Histórias de Usuário](docs/user-stories.md) | US01–US08 com critérios de aceite em Gherkin |
+| [Diagramas](docs/diagramas.md) | Diagrama de classes, modelo de dados, C4, sequência e wireframes |
+| [Changelog](CHANGELOG.md) | Histórico de versões |
+
+## Arquitetura
+
+```
+src/taskflow/
+├── __init__.py      # versão do pacote
+├── __main__.py      # permite python -m taskflow
+├── cli.py           # interface: argparse, mensagens e códigos de saída
+├── formatters.py    # apresentação: tabela e resumo em texto
+├── services.py      # aplicação: casos de uso (TaskService)
+├── models.py        # domínio: Tarefa, Prioridade, Status e validações
+└── repository.py    # infraestrutura: JSON com escrita atômica
+tests/               # testes unittest de cada camada
+scripts/criar-backlog.sh   # cria labels, milestones e issues via GitHub CLI
+```
+
+Cada camada depende apenas da camada de baixo (`cli → services → repository/models`). Veja os diagramas C4 em [docs/diagramas.md](docs/diagramas.md).
+
