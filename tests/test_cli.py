@@ -89,5 +89,27 @@ class TestListar(BaseCli):
         self.assertNotIn("Entregar relatório", out)
 
 
+class TestEditar(BaseCli):
+    def setUp(self):
+        super().setUp()
+        self.executar("adicionar", "Estudar Git", "--prazo", "2026-11-14")
+
+    def test_editar(self):
+        codigo, out, _ = self.executar("editar", "1", "--titulo", "Estudar Git Flow", "--sem-prazo")
+        self.assertEqual((codigo, out.strip()), (0, "Tarefa 1 atualizada."))
+        [t] = self.repo.carregar()
+        self.assertEqual(t.titulo, "Estudar Git Flow")
+        self.assertIsNone(t.prazo)
+
+    def test_tarefa_inexistente(self):
+        codigo, _, err = self.executar("editar", "99", "--titulo", "X")
+        self.assertEqual((codigo, err.strip()), (1, "Erro: Tarefa 99 não encontrada."))
+
+    def test_sem_campos(self):
+        codigo, _, err = self.executar("editar", "1")
+        self.assertEqual(codigo, 1)
+        self.assertIn("Nada para alterar", err)
+
+
 if __name__ == "__main__":
     unittest.main()
